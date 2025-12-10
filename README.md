@@ -10,8 +10,8 @@ pip install -r requirements.txt
 ```
 2. Create a `.env` file
 ```
-DISCORD_BOT_TOKEN=your_bot_token_here
-LEARNING_CHANNEL_ID=123456789012345678
+DISCORD_BOT_TOKEN="your_bot_token_here"
+LEARNING_CHANNEL_ID=1234567890
 ```
 Required Permissions
 Make sure the bot has at least the following permissions in both the learning channel and any channel it needs to respond in:
