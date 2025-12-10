@@ -1,8 +1,8 @@
 import json
 import os
 from pathlib import Path
-import discord
 import aiohttp
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 load_dotenv()
@@ -52,7 +52,7 @@ async def url_is_valid(url: str) -> bool:
                 return True
     except Exception:
         return False
-async def xuly_tinnhan(message: discord.Message, content_raw: str, content_lower: str, db: dict) -> bool:
+async def handle_learning(message: discord.Message, content_raw: str, content_lower: str, db: dict) -> bool:
     if not content_raw or " " in content_raw or content_raw != content_lower:
         return False
     if len(message.attachments) != 1:
@@ -62,37 +62,37 @@ async def xuly_tinnhan(message: discord.Message, content_raw: str, content_lower
         return False
     db[content_lower] = attachment.url
     save_db(db)
-    print(f"[LEARN] da luu ky tu trigger '{content_lower}' -> {attachment.url}")
+    print(f"[LEARN] da luu keyword '{content_lower}' -> {attachment.url}")
     return True
-async def xuly_trigger(message: discord.Message, content_lower: str, db: dict) -> None:
+async def respond_if_trigger(message: discord.Message, content_lower: str, db: dict) -> None:
     if content_lower not in db:
         return
-    tg = db[content_lower]
-    print(f"[TRIGGER] {content_lower} -> sending {tg}")
-    if tg.startswith(("http://", "https://")):
-        is_valid = await url_is_valid(tg)
+    target = db[content_lower]
+    print(f"Tu khoa {content_lower} -> sending {target}")
+    if target.startswith(("http://", "https://")):
+        is_valid = await url_is_valid(target)
         if not is_valid:
             if content_lower in db:
                 del db[content_lower]
-            print(f"[CLEANUP] Tu '{content_lower}' bi xoa vi link hong")
+            print(f"[CLEANUP] Tu khoa '{content_lower}' bi xoa vi anh bi xoa trong kenh lay anh")
             save_db(db)
             try:
-                await message.channel.send("Ảnh đã bị xóa rồi, thêm lại đi con vợ")
+                await message.channel.send("ảnh đã bị xóa rồi")
             except Exception:
                 pass
             return
     try:
-        if tg.startswith(("http://", "https://")):
-            await message.channel.send(tg)
+        if target.startswith(("http://", "https://")):
+            await message.channel.send(target)
         else:
-            await message.channel.send(file=discord.File(tg))
+            await message.channel.send(file=discord.File(target))
     except (discord.Forbidden, discord.HTTPException, discord.NotFound, Exception):
         if content_lower in db:
             del db[content_lower]
-        print(f"[CLEANUP] Tu '{content_lower}' bi xoa vi link hong")
+        print(f"[CLEANUP] Trigger '{content_lower}' removed due to broken URL.")
         save_db(db)
         try:
-            await message.channel.send("Ảnh đã bị xóa rồi, thêm lại đi con vợ")
+            await message.channel.send("ảnh đã bị xóa rồi")
         except Exception:
             pass
 triggers_db = load_db()
@@ -102,6 +102,40 @@ bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 @bot.event
 async def on_ready():
     print("Online")
+@bot.command(name="scan")
+async def scan_learning_channel(ctx: commands.Context):
+    channel = bot.get_channel(LEARNING_CHANNEL_ID_INT)
+    if channel is None:
+        try:
+            channel = await bot.fetch_channel(LEARNING_CHANNEL_ID_INT)
+        except Exception as exc:
+            print(f"[DB] Scan bi loi trong kenh lay anh ({exc})")
+            return
+    added = 0
+    async for msg in channel.history(limit=None, oldest_first=True):
+        if msg.author.bot:
+            continue
+        content_raw = msg.content.strip()
+        content_lower = content_raw.lower()
+        if not content_raw or " " in content_raw or content_raw != content_lower:
+            continue
+        if len(msg.attachments) != 1:
+            continue
+        attachment = msg.attachments[0]
+        if not is_image_attachment(attachment):
+            continue
+        if content_lower in triggers_db:
+            continue
+        url = attachment.url
+        if url.startswith(("http://", "https://")):
+            valid = await url_is_valid(url)
+            if not valid:
+                continue
+        triggers_db[content_lower] = url
+        added += 1
+    if added > 0:
+        save_db(triggers_db)
+    print(f"[DB] Scan added {added} triggers")
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -109,11 +143,11 @@ async def on_message(message: discord.Message):
     content_raw = message.content.strip()
     content_lower = content_raw.lower()
     if message.channel.id == LEARNING_CHANNEL_ID_INT:
-        learned = await xuly_tinnhan(message, content_raw, content_lower, triggers_db)
+        learned = await handle_learning(message, content_raw, content_lower, triggers_db)
         if learned:
             return
         await bot.process_commands(message)
         return
-    await xuly_trigger(message, content_lower, triggers_db)
+    await respond_if_trigger(message, content_lower, triggers_db)
     await bot.process_commands(message)
 bot.run(TOKEN)
