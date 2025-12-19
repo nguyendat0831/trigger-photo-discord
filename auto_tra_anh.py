@@ -36,12 +36,15 @@ def load_db() -> dict:
     return data
 def save_db(db: dict) -> None:
     TRIGGERS_FILE.write_text(json.dumps(db, indent=2), encoding="utf-8")
-def is_image_attachment(attachment: discord.Attachment) -> bool:
+def is_media_attachment(attachment: discord.Attachment) -> bool:
     content_type = attachment.content_type or ""
-    if content_type.startswith("image/"):
+    if content_type.startswith(("image/", "video/")):
         return True
     filename = (attachment.filename or "").lower()
-    return filename.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"))
+    return filename.endswith((
+        ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp",
+        ".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v",
+    ))
 async def url_is_valid(url: str) -> bool:
     timeout = aiohttp.ClientTimeout(total=5)
     try:
@@ -58,7 +61,7 @@ async def handle_learning(message: discord.Message, content_raw: str, content_lo
     if len(message.attachments) != 1:
         return False
     attachment = message.attachments[0]
-    if not is_image_attachment(attachment):
+    if not is_media_attachment(attachment):
         return False
     db[content_lower] = attachment.url
     save_db(db)
@@ -122,7 +125,7 @@ async def scan_learning_channel(ctx: commands.Context):
         if len(msg.attachments) != 1:
             continue
         attachment = msg.attachments[0]
-        if not is_image_attachment(attachment):
+        if not is_media_attachment(attachment):
             continue
         if content_lower in triggers_db:
             continue
