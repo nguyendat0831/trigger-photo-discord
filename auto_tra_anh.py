@@ -9,7 +9,7 @@ TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 LEARNING_CHANNEL_ID = os.getenv("LEARNING_CHANNEL_ID")
 LEARNING_CHANNEL_ID_INT = None
 if not TOKEN:
-    raise RuntimeError("chua nhet DISCORD_BOT_TOKEN vao .env roi thang ngu")
+    raise RuntimeError("chua nhet DISCORD_BOT_TOKEN vao .env")
 if LEARNING_CHANNEL_ID:
     try:
         LEARNING_CHANNEL_ID_INT = int(LEARNING_CHANNEL_ID)
