@@ -1,0 +1,15 @@
+VI: Hướng dẫn sử dụng bot:
+- Trigger media: gửi 1 keyword (chữ thường, không dấu cách) + 1 tệp đính kèm (ảnh/video/âm thanh) trong kênh learning.
+- Đổi kênh học: !setlearning <channel_id> (cần Manage Guild hoặc Administrator).
+- Quét lịch sử kênh học: !scan (chỉ log ra console).
+- Trigger text: !text keyword-reply (vd: !text abc-xyz).
+- Gọi trigger: chỉ cần gửi keyword (không cần prefix).
+- Quyền bot cần: xem kênh, nhắn tin (kênh learning), nhúng liên kết, đính kèm tệp tin, thêm biểu cảm, dùng emoji mở rộng, dùng sticker mở rộng, xem lịch sử tin nhắn.
+
+EN: How to use bot:
+- Media trigger: send 1 keyword (lowercase, no spaces) + 1 attachment (image/video/audio) in the learning channel.
+- Set learning channel: !setlearning <channel_id> (requires Manage Guild or Administrator).
+- Scan learning history: !scan (prints to console only).
+- Text trigger: !text keyword-reply (e.g. !text abc-xyz).
+- Use trigger: just send the keyword (no prefix).
+- Required bot permissions: View Channels, Send Messages (learning channel), Embed Links, Attach Files, Add Reactions, Use External Emoji, Use External Stickers, Read Message History.

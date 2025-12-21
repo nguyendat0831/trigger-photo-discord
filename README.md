@@ -1,44 +1,78 @@
-# Trigger Photo Discord Bot
-Features
-- Get new triggers directly from user messages in the channel.
-- Stores keyword–image mappings in `triggers.json`.
-- Includes a `!scan` command to rebuild the database from channel history if the JSON file is lost.
-Installation
-1. Install dependencies
+# Discord Trigger Bot
+
+## Overview
+This bot learns keyword triggers from a learning channel and responds with the original media (image/video/audio) or text. Triggers are case-insensitive and isolated per guild.
+
+## Features
+- Learn triggers from messages in a configured learning channel.
+- Respond to triggers by fetching the original message and sending its attachment (avoids CDN expiry issues).
+- Support image, video, and audio attachments.
+- Support text triggers via `!text keyword-reply`.
+- Per-guild learning channels via `!setlearning`.
+- Scan learning history with `!scan`.
+- List triggers with `!list`.
+- Help text stored in `help.txt` and shown by `!h`.
+
+## Requirements
 ```
 pip install -r requirements.txt
 ```
-2. Create a `.env` file
+
+## .env
+Create a `.env` file:
 ```
 DISCORD_BOT_TOKEN="your_bot_token_here"
-LEARNING_CHANNEL_ID=1234567890
 ```
-Required Permissions
-Make sure the bot has at least the following permissions in both the learning channel and any channel it needs to respond in:
-- Read Messages
-- Send Messages
-- Read Message History
-- Attach Files
-How to Teach the Bot a New Trigger
-1. Create the photo channel.
-2. Send a message that contains only one lowercase keyword (no spaces) and image at the same time.
-Example:
-```
-abc1
-<image attachment>
-```
-The bot will store:
-```
-"abc1": "https://cdn.discordapp.com/..."
-```
-Restoring Lost Triggers (Scan History)
+`LEARNING_CHANNEL_ID` is optional. If set, it is used as a fallback learning channel for guilds that have not run `!setlearning`.
 
-If `triggers.json` gets deleted or corrupted, you can rebuild the trigger list:
-Inside Discord, type:
+## Permissions
+Recommended permissions:
+- View Channels
+- Send Messages (learning channel)
+- Embed Links
+- Attach Files
+- Add Reactions
+- Use External Emoji
+- Use External Stickers
+- Read Message History
+
+## Commands
+- `!setlearning <channel_id>`: set the learning channel for the current guild (requires Manage Guild or Administrator).
+- `!scan`: scan the learning channel history and add missing triggers.
+- `!text keyword-reply`: add a text trigger (example: `!text abc-xyz`).
+- `!list`: list saved keywords for the current guild.
+- `!h`: show help text from `help.txt`.
+
+## Learning Rules
+In the learning channel:
+- Message must be a single word (no spaces). Case does not matter.
+- Message must have exactly one attachment (image/video/audio).
+- If the keyword already exists, the bot reacts with ❌.
+- If new, the bot saves it and reacts with ✅.
+
+## Trigger Behavior
+- Triggers are matched case-insensitively.
+- Text triggers reply with the configured text.
+- Media triggers fetch the original message by channel_id and message_id, then send the attachment URL.
+- If the source message is missing or cannot be fetched, the trigger is removed.
+
+## Database Format
+`triggers.json` structure (per guild):
 ```
-!scan
+{
+  "<guild_id>": {
+    "_LEARNING_CHANNEL_ID": 1234567890,
+    "_TEXT_TRIGGERS": {
+      "hello": "hi"
+    },
+    "<media_keyword>": {
+      "channel_id": 123,
+      "message_id": 456
+    }
+  }
+}
 ```
-The bot will scan the entire message history of the learning channel and restore all valid keyword–image pairs.
-Notes
-This project is intended for personal use, automation, and experimentation with Discord triggers.  
-Feel free to fork, modify, or extend the bot as you like.
+
+## Notes
+- Enable Message Content Intent in the Discord developer portal and bot settings.
+- The bot is designed to run 24/7 and handle multiple servers.
